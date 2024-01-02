@@ -504,7 +504,15 @@ module ImmGen(instr, ALUOp, imm_32);
     always @(*) begin
         case(ALUOp)
             // I-type
-            2'b11:  imm_32 = {{20{instr[31]}}, instr[31:20]};
+            2'b11: begin
+                case(instr[14:12])
+                    3'b000: imm_32 = {{20{instr[31]}}, instr[31:20]}; // addi
+                    3'b010: imm_32 = {{20{instr[31]}}, instr[31:20]}; // slti
+                    3'b001: imm_32 = {{27{instr[24]}}, instr[24:20]}; // slli
+                    3'b101: imm_32 = {{27{instr[24]}}, instr[24:20]}; // srai
+                    default:imm_32 = {{20{instr[31]}}, instr[31:20]};
+                endcase
+            end
             // beq, bne
             2'b01:  imm_32 = {{20{instr[31]}}, instr[7], instr[30:25], instr[11:8], 1'b0};
             2'b00: begin
@@ -521,7 +529,7 @@ module ImmGen(instr, ALUOp, imm_32);
         endcase
     end
 endmodule
-
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
 module ALUControl(ALUOp, funct7_5, funct7_0, funct3, opcode, ALU_Control, Is_Mul);
     input      [1:0] ALUOp;
     input            funct7_5, funct7_0;
@@ -584,7 +592,7 @@ module ALU (i_A, i_B, ALU_Control, Counter, Mul_Product, ALU_Out, Done);
             3'b001: o_result = $signed(i_A) - $signed(i_B);  // sub
             3'b010: o_result = i_A << $signed(i_B);          // slli
             3'b011: o_result = ($signed(i_A) < $signed(i_B)) ? 32'b1 : 32'b0; // slti
-            3'b100: o_result = i_A >>> $signed(i_B);         // srai
+            3'b100: o_result = $signed(i_A) >>> $signed(i_B);         // srai
             3'b101: o_result = i_A ^ i_B;                    // xor
             3'b110: o_result = i_A & i_B;                    // and
             3'b111: begin                                    // mul
